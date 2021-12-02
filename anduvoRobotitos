@@ -1,0 +1,214 @@
+
+
+programa parcialFeo
+procesos
+  proceso juntarFlores( ES flores: numero)
+  comenzar
+    mientras (HayFlorEnLaEsquina)
+      tomarFlor
+      flores:=flores+1
+  fin
+
+  proceso juntarpapeles( ES papeles: numero)
+  comenzar
+    mientras (HayPapelEnLaEsquina)
+      tomarPapel
+      papeles:=papeles+1
+  fin
+  proceso esquina(ES papeles:numero;ES flores:numero )
+  comenzar
+    juntarFlores(flores)
+    juntarpapeles(papeles)
+    BloquearEsquina(PosAv,3)
+    mover
+    juntarFlores(flores)
+    juntarpapeles(papeles)
+    mover
+    LiberarEsquina(PosAv,3)
+  fin
+
+  proceso postEsquina (ES papeles:numero; ES flores:numero)
+  comenzar
+    derecha 
+    repetir 3
+      juntarFlores(flores)
+      juntarpapeles(papeles)
+      mover
+  fin
+
+  proceso Rectangulo (E alto: numero; ES flores: numero; ES papeles:numero)
+  comenzar
+    juntarFlores(flores)
+    juntarpapeles(papeles)
+    mover
+    esquina(papeles,flores)
+    repetir alto - 4
+      juntarFlores(flores)
+      juntarpapeles(papeles)
+      mover
+    postEsquina(papeles,flores)
+    derecha
+    repetir alto - 4
+      juntarFlores(flores)
+      juntarpapeles(papeles)
+      mover
+    esquina(papeles,flores)
+    juntarFlores(flores)
+    juntarpapeles(papeles)
+    mover
+    postEsquina(papeles,flores)
+    derecha
+  fin
+  proceso bloquearEsq(E calle:numero)
+  comenzar
+    si (HayPapelEnLaEsquina)
+      tomarPapel
+    BloquearEsquina(PosAv+1,calle)
+    mover
+    si (HayPapelEnLaEsquina)
+      tomarPapel
+    mover
+    LiberarEsquina(PosAv -1,calle)
+  fin
+
+  proceso depositarFlores (ES flores: numero)
+  comenzar
+    depositarFlor 
+    flores:= flores - 1
+  fin
+
+  proceso Maximos (E total: numero; E id: numero; ES max1: numero; ES max2: numero; ES idMax1: numero; ES idMax2: numero)
+  comenzar
+    si (total > max1)
+      max1:= total
+      max2:=max1
+      idMax2:= idMax1
+      idMax1:= id
+    sino 
+      si (total > max2)
+        max2:=total
+        idMax2:=id
+  fin
+
+areas
+  AreaJefe: AreaP (1,1,1,1)
+  AreaRobot1: AreaP (5,1,8,61)
+  AreaRobot2: AreaP (10,1,13,61)
+  AreaRobot3: AreaP (15,1,18,61)
+  AreaCallejero: AreaP(1,3,100,3)
+  Esquina: AreaPC (61,61,61,61)
+
+robots
+  robot rectangulo
+  variables
+    alto, flores, papeles, total, id, ganador, AvActual, CaActual: numero
+  comenzar
+    Random(alto,5,60)
+    flores:=0
+    papeles:=0
+    total:=0
+    AvActual:= PosAv
+    CaActual:= PosCa
+    RecibirMensaje(id,jefe)
+    Rectangulo(alto,flores,papeles)
+    total:= flores + papeles
+    EnviarMensaje(id, jefe)
+    EnviarMensaje(total, jefe)
+    RecibirMensaje(ganador,jefe)
+    si (ganador=1)
+      mientras (flores > 0)
+        BloquearEsquina(61,61)
+        Pos(61,61)
+        depositarFlores(flores)
+        Pos(AvActual,CaActual)
+        LiberarEsquina(61,61)
+  fin
+
+  robot TipoC
+  variables
+    calle:numero
+  comenzar
+    calle:=3
+    derecha 
+    repetir 3
+      si (HayPapelEnLaEsquina)
+        tomarPapel
+      mover
+    repetir 3
+      bloquearEsq(calle)
+      si (HayPapelEnLaEsquina)
+        tomarPapel
+      mover
+      bloquearEsq(calle)
+      {estamos en la 19}
+    repetir 80
+      si (HayPapelEnLaEsquina)
+        tomarPapel
+      mover
+    si (HayPapelEnLaEsquina)
+      tomarPapel
+  fin
+
+  robot tipoJ
+  variables
+    id, total, max1, max2, idMax1, idMax2, ganador: numero
+  comenzar
+    max1:= - 1
+    max2:= - 1 
+    EnviarMensaje(1, robot1)
+    EnviarMensaje(2, robot2)
+    EnviarMensaje(3, robot3)
+    repetir 3
+      RecibirMensaje(id, *)
+      si (id= 1)
+        RecibirMensaje(total, robot1)
+      sino
+        si (id= 2)
+          RecibirMensaje(total, robot2)
+        sino
+          RecibirMensaje(total, robot3)
+      Maximos(total,id, max1, max2, idMax1, idMax2)
+    si (idMax1 = 1)  
+      EnviarMensaje(1, robot1)
+    sino
+      si (idMax1 = 2)
+        EnviarMensaje(1, robot2)
+      sino
+        EnviarMensaje(1, robot3)
+    si (idMax2 = 1)
+      EnviarMensaje(1, robot1)
+    sino
+      si (idMax2 = 2)
+        EnviarMensaje(1, robot2)
+      sino
+        EnviarMensaje(1, robot3)
+    si (idMax1 <> 1) & (idMax2 <> 1)
+      EnviarMensaje(0, robot1)
+    sino
+      si (idMax1 <> 2) & (idMax2 <> 2)  
+        EnviarMensaje(0, robot2)
+      sino
+        EnviarMensaje(0, robot3)
+  fin
+
+variables 
+  robot1: rectangulo
+  robot2: rectangulo
+  robot3: rectangulo
+  callejero: TipoC
+  jefe: tipoJ
+comenzar 
+  AsignarArea(robot1, AreaRobot1)  
+  AsignarArea(robot2, AreaRobot2)  
+  AsignarArea(robot3, AreaRobot3)  
+  AsignarArea(robot1, Esquina)  
+  AsignarArea(robot2, Esquina)  
+  AsignarArea(robot3, Esquina)  
+  AsignarArea(jefe, AreaJefe)  
+  AsignarArea(callejero, AreaCallejero)  
+  Iniciar(robot1,5,1)
+  Iniciar(robot2,10,1)
+  Iniciar(robot3,15,1)
+  Iniciar(jefe,1,1)
+  Iniciar(callejero,1,3)
+fin
